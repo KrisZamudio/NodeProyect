@@ -20,8 +20,6 @@ login.post('/', async (req, res, next) => {
         }
 
         const user = rows[0];
-        console.log('Usuario encontrado:', user);
-        console.log('Password del body:', password);
         const coincide = await bcrypt.compare(password, user.password);
 
         if (!coincide) {

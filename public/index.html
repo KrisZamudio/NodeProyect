@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Directorio de empleados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#3A2230;--paper:#FFF5F8;--surface:#fff;--line:#EBCBD8;--muted:#7A5B6A;--pink:#F9C6D8;--pink-strong:#F2A0BD;--accent:#A3325F;--danger:#B3261E;--r:6px}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 "Public Sans",system-ui,sans-serif;color:var(--ink);background:var(--paper)}
+h1,h2{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.1;margin:0}
+.hidden{display:none!important}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Botones y campos */
+.btn{font:inherit;font-weight:600;padding:10px 18px;border-radius:var(--r);border:1px solid var(--pink-strong);background:var(--pink-strong);color:var(--ink);cursor:pointer}
+.btn:hover{filter:brightness(.95)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.link{font:inherit;background:none;border:0;padding:4px 6px;color:var(--accent);font-weight:600;cursor:pointer}
+.link.del{color:var(--danger)}
+label{display:block;font-weight:500;margin-bottom:14px}
+input{display:block;width:100%;margin-top:4px;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:#fff;color:var(--ink)}
+.err{color:var(--danger);min-height:1.5em;margin:0 0 8px}
+
+/* Inicio de sesión */
+.login{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+.side{background:var(--pink);color:var(--ink);padding:48px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px}
+.side h1{font-size:clamp(2.2rem,5vw,3.8rem)}
+.side p{margin:0;color:#5A3347;max-width:34ch}
+.form-wrap{display:grid;place-content:center;padding:32px}
+.form-wrap form{width:min(360px,86vw)}
+.form-wrap h2{font-size:1.8rem;margin-bottom:20px}
+.form-wrap .btn{width:100%}
+
+/* Aplicación */
+.bar{background:var(--pink);color:var(--ink);display:flex;justify-content:space-between;align-items:center;padding:12px 24px;gap:12px}
+.bar strong{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:1.15rem}
+.bar span{color:#5A3347;margin-right:12px}
+.bar .btn.ghost{color:var(--ink);border-color:#E39AB6;padding:6px 14px}
+main{max-width:1040px;margin:0 auto;padding:28px 24px}
+.tools{display:flex;gap:12px;margin-bottom:16px}
+.tools input{margin:0;flex:1}
+.table-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.9rem;padding:12px 16px;border-bottom:1px solid var(--line);background:#FFF9FB}
+td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.name{font-weight:600}
+td.acts{white-space:nowrap;text-align:right}
+td.empty{text-align:center;color:var(--muted);padding:40px 16px}
+
+/* Diálogos y aviso */
+dialog{border:1px solid var(--line);border-radius:var(--r);padding:24px;width:min(520px,92vw);color:var(--ink)}
+dialog::backdrop{background:rgba(58,34,48,.45)}
+dialog h2{font-size:1.5rem;margin-bottom:16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:var(--r);max-width:90vw}
+#toast.bad{background:var(--danger)}
+
+@media(max-width:760px){
+  .login{grid-template-columns:1fr}
+  .side{padding:32px;min-height:220px}
+  .row{grid-template-columns:1fr}
+  thead{display:none}
+  tr{display:block;padding:12px 16px;border-bottom:1px solid var(--line)}
+  td{display:block;border:0;padding:2px 0}
+  td[data-l]::before{content:attr(data-l) ": ";color:var(--muted)}
+  td.name::before{content:""}
+  td.acts{text-align:left;margin-top:6px}
+  .tools{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<!-- Pantalla 1: inicio de sesión -->
+<section id="login" class="login">
+  <div class="side">
+    <h1>Directorio de empleados</h1>
+    <p>Taller de Node.js S.A. de C.V.</p>
+  </div>
+  <div class="form-wrap">
+    <form id="loginForm">
+      <h2>Iniciar sesión</h2>
+      <label>Usuario<input id="usuario" autocomplete="username" required></label>
+      <label>Contraseña<input id="password" type="password" autocomplete="current-password" required></label>
+      <p id="loginErr" class="err" role="alert"></p>
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+  </div>
+</section>
+
+<!-- Pantalla 2: lista de empleados -->
+<section id="app" class="hidden">
+  <header class="bar">
+    <strong>Directorio de empleados</strong>
+    <div><span id="who"></span><button id="logout" class="btn ghost" type="button">Cerrar sesión</button></div>
+  </header>
+  <main>
+    <div class="tools">
+      <input id="search" type="search" placeholder="Buscar empleado por nombre" aria-label="Buscar empleado por nombre">
+      <button id="add" class="btn" type="button">Agregar empleado</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Empleado</th><th>Teléfono</th><th>Correo</th><th>Dirección</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </main>
+</section>
+
+<!-- Pantalla 3: formulario de alta y edición -->
+<dialog id="formDlg">
+  <form id="empForm">
+    <h2 id="formTitle">Agregar empleado</h2>
+    <div class="row">
+      <label>Nombre<input id="f_nombre" required></label>
+      <label>Apellidos<input id="f_apellidos" required></label>
+    </div>
+    <div class="row">
+      <label>Teléfono<input id="f_telefono" type="tel"></label>
+      <label>Correo electrónico<input id="f_correo" type="email"></label>
+    </div>
+    <label>Dirección<input id="f_direccion"></label>
+    <p id="formErr" class="err" role="alert"></p>
+    <div class="actions">
+      <button class="btn ghost" type="button" id="cancelForm">Cancelar</button>
+      <button class="btn" type="submit">Guardar cambios</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Pantalla 4: confirmar eliminación -->
+<dialog id="delDlg">
+  <h2>Eliminar empleado</h2>
+  <p id="delText"></p>
+  <div class="actions">
+    <button class="btn ghost" type="button" id="cancelDel">Cancelar</button>
+    <button class="btn danger" type="button" id="confirmDel">Eliminar empleado</button>
+  </div>
+</dialog>
+
+<div id="toast" class="hidden" role="status"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let token = sessionStorage.getItem('token');
+let lista = [], editId = null, delId = null, timer;
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(msg, bad) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = bad ? 'bad' : '';
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.add('hidden'), 3500);
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {})
+    }
+  });
+  if (res.status === 401 && path !== '/login') {
+    logout('Tu sesión expiró. Inicia sesión de nuevo.');
+    throw new Error('Sesión expirada');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'No se pudo completar la acción');
+  return data;
+}
+
+function showApp() {
+  $('#login').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  $('#who').textContent = sessionStorage.getItem('usuario') || '';
+  load();
+}
+
+function logout(msg) {
+  token = null;
+  sessionStorage.clear();
+  $('#app').classList.add('hidden');
+  $('#login').classList.remove('hidden');
+  $('#password').value = '';
+  $('#loginErr').textContent = msg || '';
+}
+
+async function load() {
+  const q = $('#search').value.trim();
+  try {
+    lista = await api('/empleados' + (q ? '?nombre=' + encodeURIComponent(q) : ''));
+    render(q);
+  } catch (e) { if (token) toast(e.message, true); }
+}
+
+function render(q) {
+  const body = $('#rows');
+  if (!lista.length) {
+    body.innerHTML = '<tr><td class="empty" colspan="5">' + (q
+      ? 'No hay empleados con el nombre “' + esc(q) + '”.'
+      : 'Aún no hay empleados. Agrega el primero con el botón de arriba.') + '</td></tr>';
+    return;
+  }
+  body.innerHTML = lista.map(e => `
+    <tr>
+      <td class="name">${esc(e.nombre)} ${esc(e.apellidos)}</td>
+      <td data-l="Teléfono">${esc(e.telefono)}</td>
+      <td data-l="Correo">${esc(e.correo)}</td>
+      <td data-l="Dirección">${esc(e.direccion)}</td>
+      <td class="acts">
+        <button class="link" data-edit="${e.id}">Editar</button>
+        <button class="link del" data-del="${e.id}">Eliminar</button>
+      </td>
+    </tr>`).join('');
+}
+
+/* Inicio y cierre de sesión */
+$('#loginForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  $('#loginErr').textContent = '';
+  try {
+    const usuario = $('#usuario').value.trim();
+    const data = await api('/login', {
+      method: 'POST',
+      body: JSON.stringify({ usuario, password: $('#password').value })
+    });
+    token = data.token;
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('usuario', usuario);
+    showApp();
+  } catch (e) { $('#loginErr').textContent = e.message; }
+});
+$('#logout').addEventListener('click', () => logout());
+
+/* Búsqueda por nombre */
+$('#search').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(load, 250); });
+
+/* Alta y edición */
+function openForm(emp) {
+  editId = emp ? emp.id : null;
+  $('#formTitle').textContent = emp ? 'Editar empleado' : 'Agregar empleado';
+  for (const k of ['nombre', 'apellidos', 'telefono', 'correo', 'direccion'])
+    $('#f_' + k).value = emp ? (emp[k] ?? '') : '';
+  $('#formErr').textContent = '';
+  $('#formDlg').showModal();
+}
+$('#add').addEventListener('click', () => openForm(null));
+$('#cancelForm').addEventListener('click', () => $('#formDlg').close());
+
+$('#empForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const body = {};
+  for (const k of ['nombre', 'apellidos', 'telefono', 'correo', 'direccion'])
+    body[k] = $('#f_' + k).value.trim();
+  try {
+    await api(editId ? '/empleados/' + editId : '/empleados',
+      { method: editId ? 'PUT' : 'POST', body: JSON.stringify(body) });
+    $('#formDlg').close();
+    toast(editId ? 'Cambios guardados' : 'Empleado agregado');
+    load();
+  } catch (e) { $('#formErr').textContent = e.message; }
+});
+
+/* Eliminación */
+$('#rows').addEventListener('click', ev => {
+  const ed = ev.target.closest('[data-edit]'), dl = ev.target.closest('[data-del]');
+  if (ed) openForm(lista.find(e => e.id == ed.dataset.edit));
+  if (dl) {
+    const e = lista.find(x => x.id == dl.dataset.del);
+    delId = e.id;
+    $('#delText').textContent = 'Se eliminará a ' + e.nombre + ' ' + e.apellidos + '. Esta acción no se puede deshacer.';
+    $('#delDlg').showModal();
+  }
+});
+$('#cancelDel').addEventListener('click', () => $('#delDlg').close());
+$('#confirmDel').addEventListener('click', async () => {
+  try {
+    await api('/empleados/' + delId, { method: 'DELETE' });
+    $('#delDlg').close();
+    toast('Empleado eliminado');
+    load();
+  } catch (e) { $('#delDlg').close(); toast(e.message, true); }
+});
+
+if (token) showApp();
+</script>
+</body>
+</html>
